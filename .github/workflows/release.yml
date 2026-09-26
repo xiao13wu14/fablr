@@ -72,8 +72,10 @@ jobs:
           npm install -g npm@9 --silent
           node -e "const fs=require('fs');const p='package-lock.json';let s=fs.readFileSync(p,'utf8');const n=s.replace(/https?:\/\/mirrors\.tencentyun\.com\/npm\//g,'https://registry.npmjs.org/').replace(/https?:\/\/registry\.npmmirror\.com\//g,'https://registry.npmjs.org/');if(n!==s){fs.writeFileSync(p,n);console.log('package-lock.json registry fixed');}else{console.log('package-lock.json already clean');}"
           npm ci --no-audit --no-fund
-          # tauri CLI 要求 npm 包与 Rust crate 版本对齐，这里按 Cargo.lock 的实际版本升级三个不匹配的 npm 包
-          npm install --no-audit --no-fund @tauri-apps/api@2.11.2 @tauri-apps/plugin-dialog@2.7.1 @tauri-apps/plugin-fs@2.5.1
+          # 与 Cargo.lock 对齐（同 minor 即可）：rust tauri 2.11.2/dialog 2.7.1/fs 2.5.1，
+          # npm 上对应 api 最新为 2.11.1（不存在 2.11.2，装错版本会导致前端解析失败）
+          npm install --no-audit --no-fund @tauri-apps/api@2.11.1 @tauri-apps/plugin-dialog@2.7.1 @tauri-apps/plugin-fs@2.5.1
+          npm ls @tauri-apps/api @tauri-apps/plugin-dialog @tauri-apps/plugin-fs
 
       # Only one job creates the GitHub Release (macOS ARM64 runs first by alphabet)
       - name: Create GitHub Release
