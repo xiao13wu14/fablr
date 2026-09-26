@@ -35,29 +35,6 @@ jobs:
           repository: Agions/fablr
           ref: v2.2.0
 
-      # 修复 v2.2.0 内嵌配置 bug：
-      # tauri-plugin-global-shortcut/notification/clipboard-manager 新版本要求无配置，
-      # 旧打包配置 {"all": true} 会导致程序启动即崩溃，构建前删掉这三段。
-      - name: Fix tauri.conf.json plugin config
-        run: |
-          PY=python
-          command -v python3 >/dev/null 2>&1 && PY=python3
-          $PY - <<'PYEOF'
-          import json
-          p = 'src-tauri/tauri.conf.json'
-          with open(p, encoding='utf-8') as f:
-              d = json.load(f)
-          pl = d.get('plugins', {})
-          for k in ('global-shortcut', 'notification', 'clipboard-manager'):
-              pl.pop(k, None)
-          if not pl:
-              d.pop('plugins', None)
-          with open(p, 'w', encoding='utf-8') as f:
-              json.dump(d, f, ensure_ascii=False, indent=2)
-              f.write('\n')
-          print('tauri.conf.json 已修复，剩余 plugins =', list(pl.keys()))
-          PYEOF
-
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
@@ -69,6 +46,14 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+
+      # 修复 v2.2.0 内嵌配置 bug：
+      # tauri-plugin-global-shortcut/notification/clipboard-manager 新版本要求无配置，
+      # 旧打包配置 {"all": true} 会导致程序启动即崩溃，构建前删掉这三段。
+      # 用 Node.js 写 JSON（三个平台都保证有 node，且避免 shell 语法差异）。
+      - name: Fix tauri.conf.json plugin config
+        run: |
+          node -e "const fs=require('fs');const p='src-tauri/tauri.conf.json';let d=JSON.parse(fs.readFileSync(p,'utf8'));let pl=d.plugins||{};for(const k of ['global-shortcut','notification','clipboard-manager'])delete pl[k];if(Object.keys(pl).length===0)delete d.plugins;fs.writeFileSync(p,JSON.stringify(d,null,2)+'\n');console.log('tauri.conf.json fixed, plugins left:',Object.keys(d.plugins||{}))"
 
       - name: Install Linux dependencies
         if: contains(matrix.platform.runner, 'ubuntu')
@@ -147,7 +132,10 @@ jobs:
           publish: false
           args: --target ${{ matrix.platform.target }}
 
+      # 这个步骤是 bash 语法（find/cp/while），Windows 运行器默认是 PowerShell，
+      # 所以显式指定 shell: bash（Windows 上有 Git Bash，Linux/macOS 本来就是 bash）。
       - name: Copy run instructions and user manuals to bundle
+        shell: bash
         run: |
           find src-tauri/target/${{ matrix.platform.target }}/release/bundle -name "*.app" -type d | while read app_path; do
             parent_dir=$(dirname "$app_path")
