@@ -31,6 +31,8 @@ jobs:
         with:
           # 官方 main 分支缺少 src-tauri/crates/models，代码不完整无法构建；
           # 改用官方最后一个可构建的标签 v2.2.0 源码。
+          # fork 里没有 v2.2.0 标签，所以直接从上游仓库拉取（公开仓库无需登录）。
+          repository: Agions/fablr
           ref: v2.2.0
 
       # 修复 v2.2.0 内嵌配置 bug：
