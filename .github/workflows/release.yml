@@ -72,6 +72,8 @@ jobs:
           npm install -g npm@9 --silent
           node -e "const fs=require('fs');const p='package-lock.json';let s=fs.readFileSync(p,'utf8');const n=s.replace(/https?:\/\/mirrors\.tencentyun\.com\/npm\//g,'https://registry.npmjs.org/').replace(/https?:\/\/registry\.npmmirror\.com\//g,'https://registry.npmjs.org/');if(n!==s){fs.writeFileSync(p,n);console.log('package-lock.json registry fixed');}else{console.log('package-lock.json already clean');}"
           npm ci --no-audit --no-fund
+          # tauri CLI 要求 npm 包与 Rust crate 版本对齐，这里按 Cargo.lock 的实际版本升级三个不匹配的 npm 包
+          npm install --no-audit --no-fund @tauri-apps/api@2.11.2 @tauri-apps/plugin-dialog@2.7.1 @tauri-apps/plugin-fs@2.5.1
 
       # Only one job creates the GitHub Release (macOS ARM64 runs first by alphabet)
       - name: Create GitHub Release
@@ -125,11 +127,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "v${{ github.ref_name }}"
-          # 手动触发时 ref_name 是 "main" 不是真实版本号，
-          # 关闭自动发布，避免创建 release 失败导致整个任务失败。
-          publish: false
+          # 手动触发时没有真实版本号，去掉 tagName/releaseName，
+          # 让 tauri-action 只构建不上传 release（避免 "main" 当标签创建失败导致整个任务失败）。
           args: --target ${{ matrix.platform.target }}
 
       # 这个步骤是 bash 语法（find/cp/while），Windows 运行器默认是 PowerShell，
