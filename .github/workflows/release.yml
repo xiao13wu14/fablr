@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g npm@9 --silent
-          sed -i.bak 's|http://mirrors.tencentyun.com/npm/|https://registry.npmjs.org/|g' package-lock.json && rm -f package-lock.json.bak
+          node -e "const fs=require('fs');const p='package-lock.json';let s=fs.readFileSync(p,'utf8');const n=s.replace(/https?:\/\/mirrors\.tencentyun\.com\/npm\//g,'https://registry.npmjs.org/').replace(/https?:\/\/registry\.npmmirror\.com\//g,'https://registry.npmjs.org/');if(n!==s){fs.writeFileSync(p,n);console.log('package-lock.json registry fixed');}else{console.log('package-lock.json already clean');}"
           npm ci --no-audit --no-fund
 
       # Only one job creates the GitHub Release (macOS ARM64 runs first by alphabet)
