@@ -2,7 +2,6 @@ name: Release
 on:
   workflow_dispatch:
   push:
-
     tags:
       - 'v*.*.*'
 
@@ -44,8 +43,7 @@ jobs:
 
       - name: Install Linux dependencies
         if: contains(matrix.platform.runner, 'ubuntu')
-       run: |
-  
+        run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
@@ -60,7 +58,6 @@ jobs:
           npm install -g npm@9 --silent
           sed -i 's|http://mirrors.tencentyun.com/npm/|https://registry.npmjs.org/|g' package-lock.json
           npm ci --no-audit --no-fund
-
 
       # Only one job creates the GitHub Release (macOS ARM64 runs first by alphabet)
       - name: Create GitHub Release
